@@ -1,0 +1,23 @@
+The joi library is meant to provide caching associated to hapi requests.
+The cache obscures the data store for simple key value storage.
+
+Currently supported are MongoDB and Redis
+
+A few samples may help.
+Note: you can't get immediately after a set it is async
+
+var JoiClass = require('../../joi');
+
+var joi = JoiClass.create();
+
+joi.clearCacheForRequest(req, function() {});
+
+joi.setCacheForRequest(req, data, function() {});
+
+joi.getCacheForRequest(req, function(cache) {
+	
+	if (cache) {
+
+		console.log('cache: ' + cache);
+	}	
+});

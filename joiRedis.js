@@ -1,5 +1,8 @@
-// JOI
-// dpedley TOOD: lets get a proper doc header in here.
+/*
+* Copyright (c) 2011 Doug Pedley. All rights reserved. Copyrights licensed under the New BSD License.
+* See LICENSE file included with this code project for license terms.
+*/
+
 
 var Redis = require('redis');
 

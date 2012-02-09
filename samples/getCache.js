@@ -1,17 +1,24 @@
 var Joi = require('../../joi');
 
-var mongo = Joi.create({
+//var joiClient = Joi.create({
+//
+//	port: 27017,
+//	address: '127.0.0.1',
+//	connectionType: Joi.connectionType.MONGO
+//});
+//
+//var joiClient = Joi.create({
+//
+//	port: 6379,
+//	address: '127.0.0.1',
+//	connectionType: Joi.connectionType.REDIS
+//});
+//
+var joiClient = Joi.create({
 
-	port: 27017,
+	port: 8008,
 	address: '127.0.0.1',
-	connectionType: Joi.connectionType.MONGO
-});
-
-var redis = Joi.create({
-
-	port: 6379,
-	address: '127.0.0.1',
-	connectionType: Joi.connectionType.REDIS
+	connectionType: Joi.connectionType.REST
 });
 
 // for testing we are creating request like objects, these would normally come from the http connection accept.
@@ -36,15 +43,9 @@ function createUniqueLog(logPrefix) {
 	}
 }
 
-mongo.getCacheForRequest(request[0], createUniqueLog('Mongo1'));
-mongo.getCacheForRequest(request[1], createUniqueLog('Mongo2'));
-mongo.getCacheForRequest(request[2], createUniqueLog('Mongo3'));
-mongo.getCacheForRequest(request[3], createUniqueLog('Mongo4'));
-mongo.getCacheForRequest(request[4], createUniqueLog('Mongo5'));
-
-redis.getCacheForRequest(request[0], createUniqueLog('Redis1'));
-redis.getCacheForRequest(request[1], createUniqueLog('Redis2'));
-redis.getCacheForRequest(request[2], createUniqueLog('Redis3'));
-redis.getCacheForRequest(request[3], createUniqueLog('Redis4'));
-redis.getCacheForRequest(request[4], createUniqueLog('Redis5'));
+joiClient.getCacheForRequest(request[0], createUniqueLog('joiClient1'));
+joiClient.getCacheForRequest(request[1], createUniqueLog('joiClient2'));
+joiClient.getCacheForRequest(request[2], createUniqueLog('joiClient3'));
+joiClient.getCacheForRequest(request[3], createUniqueLog('joiClient4'));
+joiClient.getCacheForRequest(request[4], createUniqueLog('joiClient5'));
 

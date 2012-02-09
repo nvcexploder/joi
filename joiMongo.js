@@ -1,5 +1,9 @@
+/*
+* Copyright (c) 2011 Doug Pedley. All rights reserved. Copyrights licensed under the New BSD License.
+* See LICENSE file included with this code project for license terms.
+*/
+
 // JOI Mongo DB utility functions
-// dpedley TOOD: lets get a proper doc header in here.
 
 // Take a look at options such as autoreconnect in docs:
 // https://github.com/christkv/node-mongodb-native/blob/master/docs/database.md

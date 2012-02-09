@@ -1,4 +1,8 @@
-// dpedley TODO: update this
+/*
+* Copyright (c) 2011 Doug Pedley. All rights reserved. Copyrights licensed under the New BSD License.
+* See LICENSE file included with this code project for license terms.
+*/
+
 // The joi client library
 //
 // The main export create returns a joi client library object
@@ -12,10 +16,10 @@
 // eg.
 // joiClient.setCacheForRequest(req, cacheData, reply);
 
-//
 var URL = require('url');
 var JoiMongo = require('./joiMongo');
 var JoiRedis = require('./joiRedis');
+var JoiRestClient = require('./joiRestClient');
 
 var internals = {
 
@@ -54,6 +58,20 @@ var internals = {
 		}
 	},
 	
+	// setup joi redis connection if needed
+	
+	setupRestClient: function(server) {
+	
+		if (!internals.joiRestClient) {
+			
+			internals.joiRestClient = JoiRestClient.create({
+			
+				port: server.getPort(),
+				address: server.getAddress()
+			});
+		}
+	},
+	
 	// setup and destroy the connection
 	
 	setupConnection: function(server) {
@@ -67,6 +85,10 @@ var internals = {
 		} else if (conn==exports.connectionType.REDIS) {
 		
 			internals.setupRedis(server);
+		
+		} else if (conn==exports.connectionType.REST) {
+		
+			internals.setupRestClient(server);
 		
 		}
 	},
@@ -89,67 +111,43 @@ var internals = {
 				delete internals.joiRedis;
 			}
 		
+		} else if (conn==exports.connectionType.REST) {
+		
+			if (internals.joiRestClient) {
+			
+				delete internals.joiRestClient;
+			}
+		
 		}
 	},
-
-	// mongo functions which translate the request to a DB call
-
-	mongoGetCacheForRequest: function (req, callbackValue) {
-		
-		var key = internals.translateRequestToKey(req);
-		
-		internals.joiMongo.cacheForKey(key, function(result) {
-				
-			callbackValue(result);
-		});
-	},
-
-	mongoSetCacheForRequest: function(req, value, next) {
 	
-		var key = internals.translateRequestToKey(req);
-		
-		internals.joiMongo.setCacheForKey(key, value, next);
-	},
+	getClient: function(server) {
 	
-	mongoClearCacheForRequest: function(req, next) {
-	
-		var key = internals.translateRequestToKey(req);
+		internals.setupConnection(server);
+		var conn = server.getConnectionType();
 		
-		internals.joiMongo.clearCacheForKey(key, next);
-	},
+		if (conn==exports.connectionType.MONGO) {
 		
-	// redis functions which translate the request to a DB call
-
-	redisGetCacheForRequest: function (req, callbackValue) {
+			return internals.joiMongo;
+			
+		} else if (conn==exports.connectionType.REDIS) {
 		
-		var key = internals.translateRequestToKey(req);
+			return internals.joiRedis;
 		
-		internals.joiRedis.cacheForKey(key, function(result) {
-				
-			callbackValue(result);
-		});
-	},
-
-	redisSetCacheForRequest: function(req, value, next) {
-	
-		var key = internals.translateRequestToKey(req);
+		} else if (conn==exports.connectionType.REST) {
 		
-		internals.joiRedis.setCacheForKey(key, value, next);
-	},
-	
-	redisClearCacheForRequest: function(req, next) {
-	
-		var key = internals.translateRequestToKey(req);
+			return internals.joiRestClient;
 		
-		internals.joiRedis.clearCacheForKey(key, next);
-	}	
+		}
+	}
 }
 
 // End of internals
 
 exports.connectionType = {
 	MONGO: 0,
-	REDIS: 1
+	REDIS: 1,
+	REST:  2
 };
 
 // Server class creation. the valid options are include: port
@@ -244,17 +242,12 @@ exports.create = function(inOptions) {
 
 			setCacheForRequest: function(req, value, callbackComplete) {
 			
-				// Distribute this call to the appropriate internal call based on the connectionType
-
-				internals.setupConnection(server.public);
-				if (server.connectionType==exports.connectionType.MONGO) {
+				var key = internals.translateRequestToKey(req);
+				var client = internals.getClient(server.public);
 				
-					internals.mongoSetCacheForRequest(req, value, callbackComplete);
-					
-				} else if (server.connectionType==exports.connectionType.REDIS) {
+				if (client && client.setCacheForKey) {
 				
-					internals.redisSetCacheForRequest(req, value, callbackComplete);
-				
+					client.setCacheForKey(key, value, callbackComplete);
 				}
 			},
 			
@@ -262,17 +255,12 @@ exports.create = function(inOptions) {
 
 			getCacheForRequest: function(req, callbackValue) {
 			
-				// Distribute this call to the appropriate internal call based on the connectionType
-
-				internals.setupConnection(server.public);
-				if (server.connectionType==exports.connectionType.MONGO) {
+				var key = internals.translateRequestToKey(req);
+				var client = internals.getClient(server.public);
 				
-					internals.mongoGetCacheForRequest(req, callbackValue);
-					
-				} else if (server.connectionType==exports.connectionType.REDIS) {
+				if (client && client.cacheForKey) {
 				
-					internals.redisGetCacheForRequest(req, callbackValue);
-
+					client.cacheForKey(key, callbackValue);
 				}
 			},
 			
@@ -280,17 +268,12 @@ exports.create = function(inOptions) {
 
 			clearCacheForRequest: function(req, callbackComplete) {
 			
-				// Distribute this call to the appropriate internal call based on the connectionType
-
-				internals.setupConnection(server.public);
-				if (server.connectionType==exports.connectionType.MONGO) {
+				var key = internals.translateRequestToKey(req);
+				var client = internals.getClient(server.public);
 				
-					internals.mongoClearCacheForRequest(req, callbackComplete);
-					
-				} else if (server.connectionType==exports.connectionType.REDIS) {
+				if (client && client.clearCacheForKey) {
 				
-					internals.redisClearCacheForRequest(req, callbackComplete);
-
+					client.clearCacheForKey(key, callbackComplete);
 				}
 			},
 			
@@ -298,18 +281,14 @@ exports.create = function(inOptions) {
 
 			end: function() {
 			
-				// Distribute this call to the appropriate internal call based on the connectionType
-
-				internals.setupConnection(server.public);
-				if (server.connectionType==exports.connectionType.MONGO) {
+				var client = internals.getClient(server.public);
 				
-					internals.joiMongo.end();
-					
-				} else if (server.connectionType==exports.connectionType.REDIS) {
+				if (client && client.end) {
 				
-					internals.joiRedis.end();
-
+					client.end();
 				}
+				
+				internals.destroyConnection(server);
 			}
 		}
 	};

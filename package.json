@@ -1,0 +1,14 @@
+{
+    "name": "Joi",
+    "description": "Multi level cache utilizing redis and mongodb",
+    "version": "0.0.1",
+    "author": "Doug Pedley <dpedley@gmail.com>",
+    "private": true,
+    "dependencies": {
+        "hapi": "0.x.x",
+        "mongodb": "0.9.8-7",
+		"redis": "0.7.1"
+        
+    },
+    "engines": { "node": "0.6.x" }
+}

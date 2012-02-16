@@ -2,7 +2,8 @@ var Joi = require('../../joi');
 
 var joiRules = [
 
-	{ resource: '/foo/001', cache: true, expiresat: '16:35' },
+//	{ resource: 'default', cache: false },
+	{ resource: '/foo/001', cache: true, expiresat: '02:00' },
 	{ resource: '/foo/002', cache: false },
 	{ resource: '/foo/003', cache: true, expires: 10 },
 	{ resource: '/foo/004', cache: true, expires: 5 },

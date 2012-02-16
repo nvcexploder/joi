@@ -155,11 +155,22 @@ exports.create = function(inOptions) {
 					
 						db.collection('levelOne', function(err, collection) {      
 
-							collection.insert( { 
-								'url' : key, 
-								'cache': entry,
-								'creationDate': new Date()
-							});
+							collection.update( 
+							
+								{ // Will match and update existing record
+									'url': key
+								},
+							
+								{ // The new values 
+									'url' : key, 
+									'cache': entry,
+									'creationDate': new Date()
+								},
+								
+								{ // Update options, we want to insert if new 'upsert' = update or insert
+									'upsert': true
+								}
+							);
 							next();
 						});
 					} else {

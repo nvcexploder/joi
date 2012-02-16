@@ -9,7 +9,7 @@
 // https://github.com/christkv/node-mongodb-native/blob/master/docs/database.md
 
 var Mongo = require('mongodb');
-
+var JoiRules = require('./joiRules');
 
 var internals = {
 
@@ -34,6 +34,7 @@ exports.create = function(inOptions) {
 	
 	var defaultPort = Mongo.Connection.DEFAULT_PORT;
 	var defaultAddress = '127.0.0.1';
+	var defaultExpiryRules = {};
 	
 	if (inOptions.port) {
 	
@@ -45,6 +46,11 @@ exports.create = function(inOptions) {
 		defaultAddress = inOptions.address;
 	}
 	
+	if (inOptions.expiryRules) {
+	
+		defaultExpiryRules = inOptions.expiryRules;
+	}
+	
 	var server = {
 	
 		initialOptions: inOptions,
@@ -52,6 +58,8 @@ exports.create = function(inOptions) {
 		port: defaultPort,
 		
 		address: defaultAddress,
+		
+		expiryRules: defaultExpiryRules,
 		
 		public: {
 
@@ -71,6 +79,13 @@ exports.create = function(inOptions) {
 				return server.address; 
 			},
 			
+			// the cache expiration rules 
+			
+			getExpiryRules: function() { 
+			
+				return server.expiryRules; 
+			},
+			
 			// The end of the properties
 			
 			cacheForKey: function(key, cacheOutput) {
@@ -88,7 +103,18 @@ exports.create = function(inOptions) {
 								
 									if (entry) {
 									
-										cacheOutput(entry.cache);
+										if (!JoiRules.isExpired(key, entry.creationDate, server.public.getExpiryRules())) {
+										
+											cacheOutput(entry.cache);
+											
+										} else {
+										
+											// The cache has expired, remove it and return null
+											// dpedley TODO: review, should this return the cache in some cases
+											
+											collection.remove( { 'url' : key } );
+											cacheOutput(null);
+										}
 										
 									} else {
 									
@@ -129,7 +155,11 @@ exports.create = function(inOptions) {
 					
 						db.collection('levelOne', function(err, collection) {      
 
-							collection.insert( { 'url' : key, 'cache': entry } );
+							collection.insert( { 
+								'url' : key, 
+								'cache': entry,
+								'creationDate': new Date()
+							});
 							next();
 						});
 					} else {

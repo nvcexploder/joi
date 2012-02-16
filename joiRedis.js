@@ -5,6 +5,7 @@
 
 
 var Redis = require('redis');
+var JoiRules = require('./joiRules');
 
 // dpedley TODO: remove debug mode.
 //Redis.debug_mode = true;
@@ -24,6 +25,7 @@ exports.create = function(inOptions) {
 	
 	var defaultPort = 6379;
 	var defaultAddress = '127.0.0.1';
+	var defaultExpiryRules = {};
 	
 	if (inOptions.port) {
 	
@@ -35,6 +37,11 @@ exports.create = function(inOptions) {
 		defaultAddress = inOptions.address;
 	}
 	
+	if (inOptions.expiryRules) {
+	
+		defaultExpiryRules = inOptions.expiryRules;
+	}
+	
 	var server = {
 	
 		initialOptions: inOptions,
@@ -42,6 +49,8 @@ exports.create = function(inOptions) {
 		port: defaultPort,
 		
 		address: defaultAddress,
+		
+		expiryRules: defaultExpiryRules,
 		
 		public: {
 
@@ -59,6 +68,13 @@ exports.create = function(inOptions) {
 			getAddress: function() { 
 			
 				return server.address; 
+			},
+			
+			// the cache expiration rules 
+			
+			getExpiryRules: function() { 
+			
+				return server.expiryRules; 
 			},
 			
 			// The end of the properties

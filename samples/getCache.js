@@ -1,12 +1,21 @@
 var Joi = require('../../joi');
 
-//var joiClient = Joi.create({
-//
-//	port: 27017,
-//	address: '127.0.0.1',
-//	connectionType: Joi.connectionType.MONGO
-//});
-//
+var joiRules = [
+
+	{ resource: '/foo/001', cache: true, expiresat: '16:35' },
+	{ resource: '/foo/002', cache: false },
+	{ resource: '/foo/003', cache: true, expires: 10 },
+	{ resource: '/foo/004', cache: true, expires: 5 },
+	{ resource: '/foo/005', cache: true, expires: 2 }
+];
+
+var joiClient = Joi.create({
+
+	port: 27017,
+	address: '127.0.0.1',
+	connectionType: Joi.connectionType.MONGO,
+	expiryRules: joiRules
+});
 //var joiClient = Joi.create({
 //
 //	port: 6379,
@@ -14,12 +23,12 @@ var Joi = require('../../joi');
 //	connectionType: Joi.connectionType.REDIS
 //});
 //
-var joiClient = Joi.create({
-
-	port: 8008,
-	address: '127.0.0.1',
-	connectionType: Joi.connectionType.REST
-});
+//var joiClient = Joi.create({
+//
+//	port: 8008,
+//	address: '127.0.0.1',
+//	connectionType: Joi.connectionType.REST
+//});
 
 // for testing we are creating request like objects, these would normally come from the http connection accept.
 

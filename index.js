@@ -20,6 +20,7 @@ var URL = require('url');
 var JoiMongo = require('./joiMongo');
 var JoiRedis = require('./joiRedis');
 var JoiRestClient = require('./joiRestClient');
+var JoiRules = require('./joiRules');
 
 var internals = {
 
@@ -39,7 +40,8 @@ var internals = {
 			internals.joiMongo = JoiMongo.create({
 			
 				port: server.getPort(),
-				address: server.getAddress()
+				address: server.getAddress(),
+				expiryRules: server.getExpiryRules()
 			});
 		}
 	},
@@ -53,7 +55,8 @@ var internals = {
 			internals.joiRedis = JoiRedis.create({
 			
 				port: server.getPort(),
-				address: server.getAddress()
+				address: server.getAddress(),
+				expiryRules: server.getExpiryRules()
 			});
 		}
 	},
@@ -67,7 +70,8 @@ var internals = {
 			internals.joiRestClient = JoiRestClient.create({
 			
 				port: server.getPort(),
-				address: server.getAddress()
+				address: server.getAddress(),
+				expiryRules: server.getExpiryRules()
 			});
 		}
 	},
@@ -157,6 +161,7 @@ exports.create = function(inOptions) {
 	var defaultPort = 8089;
 	var defaultAddress = '127.0.0.1';
 	var defaultConnection = exports.connectionType.MONGO;
+	var defaultExpiryRules = {};
 	
 	if (inOptions.address) {
 	
@@ -180,6 +185,11 @@ exports.create = function(inOptions) {
 		defaultPort = inOptions.port;
 	}
 	
+	if (inOptions.expiryRules) {
+	
+		defaultExpiryRules = inOptions.expiryRules;
+	}
+	
 	// dpedley TODO: rename server to something more appropriate.
 	
 	var server = {
@@ -191,6 +201,8 @@ exports.create = function(inOptions) {
 		address: defaultAddress,
 		
 		connectionType: defaultConnection,
+		
+		expiryRules: defaultExpiryRules,
 		
 		public: {
 
@@ -235,6 +247,19 @@ exports.create = function(inOptions) {
 				server.connectionType = connectionType;
 			},
 			
+			// the cache expiration rules 
+			
+			getExpiryRules: function() { 
+			
+				return server.expiryRules; 
+			},
+			
+			setExpiryRules: function(expiryRules) {
+			
+				internals.destroyConnection(server.public); // Whenever a server variable is changed, we delete our server reference
+				server.expiryRules = expiryRules;
+			},
+			
 			// The end of the properties
 			
 			
@@ -243,11 +268,20 @@ exports.create = function(inOptions) {
 			setCacheForRequest: function(req, value, callbackComplete) {
 			
 				var key = internals.translateRequestToKey(req);
-				var client = internals.getClient(server.public);
 				
-				if (client && client.setCacheForKey) {
+				if (JoiRules.shouldCache(key, server.public.getExpiryRules())) {
+									
+					var client = internals.getClient(server.public);
+					
+					if (client && client.setCacheForKey) {
+					
+						client.setCacheForKey(key, value, callbackComplete);
+					}
+					
+				} else {
 				
-					client.setCacheForKey(key, value, callbackComplete);
+					// This is not a cachable request
+					callbackComplete();
 				}
 			},
 			
@@ -256,11 +290,20 @@ exports.create = function(inOptions) {
 			getCacheForRequest: function(req, callbackValue) {
 			
 				var key = internals.translateRequestToKey(req);
-				var client = internals.getClient(server.public);
 				
-				if (client && client.cacheForKey) {
+				if (JoiRules.shouldCache(key, server.public.getExpiryRules())) {
 				
-					client.cacheForKey(key, callbackValue);
+					var client = internals.getClient(server.public);
+					
+					if (client && client.cacheForKey) {
+					
+						client.cacheForKey(key, callbackValue);
+					}
+					
+				} else {
+				
+					// This is not a cachable request, send back null
+					callbackValue(null);
 				}
 			},
 			
@@ -269,11 +312,18 @@ exports.create = function(inOptions) {
 			clearCacheForRequest: function(req, callbackComplete) {
 			
 				var key = internals.translateRequestToKey(req);
-				var client = internals.getClient(server.public);
+
+				if (JoiRules.shouldCache(key, server.public.getExpiryRules())) {
+					var client = internals.getClient(server.public);
+					
+					if (client && client.clearCacheForKey) {
+					
+						client.clearCacheForKey(key, callbackComplete);
+					}
+				} else {
 				
-				if (client && client.clearCacheForKey) {
-				
-					client.clearCacheForKey(key, callbackComplete);
+					// This is not a cachable request
+					callbackComplete();
 				}
 			},
 			

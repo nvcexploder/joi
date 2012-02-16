@@ -3,10 +3,14 @@
 * See LICENSE file included with this code project for license terms.
 */
 
+
+// dpedley TODO: we need to parse out the { cache: cacheValue } from the client to match the other data store results.
+
 // JOI REST Services Client utility functions
 
 var https = require('https');
 var http = require('http');
+var JoiRules = require('./joiRules');
 
 var internals = {
 
@@ -90,6 +94,7 @@ exports.create = function(inOptions) {
 	var defaultPort = 8165;
 	var defaultAddress = '127.0.0.1';
 	var defaultTransport = http;
+	var defaultExpiryRules = {};
 	
 	if (inOptions.port) {
 	
@@ -106,6 +111,11 @@ exports.create = function(inOptions) {
 		defaultTransport = https;
 	}
 	
+	if (inOptions.expiryRules) {
+	
+		defaultExpiryRules = inOptions.expiryRules;
+	}
+	
 	var server = {
 	
 		initialOptions: inOptions,
@@ -115,6 +125,8 @@ exports.create = function(inOptions) {
 		address: defaultAddress,
 		
 		transport: defaultTransport,
+		
+		expiryRules: defaultExpiryRules,
 		
 		public: {
 
@@ -137,6 +149,13 @@ exports.create = function(inOptions) {
 			getTransport: function() {
 			
 				return server.transport;
+			},
+			
+			// the cache expiration rules 
+			
+			getExpiryRules: function() { 
+			
+				return server.expiryRules; 
 			},
 			
 			// The end of the properties

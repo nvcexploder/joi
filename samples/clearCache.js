@@ -9,21 +9,22 @@ var joiRules = [
 	{ resource: '/foo/005', cache: true, expires: 2 }
 ];
 
+//var joiClient = Joi.create({
+//
+//	port: 27017,
+//	address: '127.0.0.1',
+//	connectionType: Joi.connectionType.MONGO,
+//	expiryRules: joiRules
+//});
+//
 var joiClient = Joi.create({
 
-	port: 27017,
+	port: 6379,
 	address: '127.0.0.1',
-	connectionType: Joi.connectionType.MONGO,
+	connectionType: Joi.connectionType.REDIS,
 	expiryRules: joiRules
 });
 
-//var joiClient = Joi.create({
-//
-//	port: 6379,
-//	address: '127.0.0.1',
-//	connectionType: Joi.connectionType.REDIS
-//});
-//
 //var joiClient = Joi.create({
 //
 //	port: 8008,

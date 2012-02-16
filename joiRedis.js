@@ -16,6 +16,7 @@ var internals = {
 	
 		return Redis.createClient(server.port, server.address, {});
 	}
+	
 };
 
 
@@ -101,7 +102,54 @@ exports.create = function(inOptions) {
 				
 					client.set(key, entry, function(result) {
 					
-						client.end();
+						var rule = JoiRules.expiryFromRules(key, server.public.getExpiryRules());
+						
+						if (rule) {
+						
+							// We check the caching type etc.
+							// Note we already know this should be cached, that is check in joi/index
+							if (rule.expires) {
+							
+								// joi expire is in minutes, convert to seconds here
+								
+								var redisTime = rule.expires * 60;
+								
+								client.expire(key, redisTime, function () {
+								
+									client.end();
+								});
+
+							} else if (rule.expiresat) {
+							
+								var now = Date.now();
+								
+								var doneDate = JoiRules.dailyExpireFromRule(rule);
+								var done = doneDate.getTime();
+								
+								if ( now > done ) { 
+								
+									// The daily expired is passed for today, create the expire based on tomorrow
+									done += 86400000; // One day worth of seconds
+								}
+								
+								// Note our timestamp is in milliseconds, redis uses seconds, adjust here
+								
+								var redisTime = done / 1000;
+								
+								client.expireat(key, redisTime, function () {
+								
+									client.end();
+								});
+								
+							} else {
+						
+								client.end();
+							}
+				
+						} else {
+						
+							client.end();
+						}
 					});
 				});
 				next();

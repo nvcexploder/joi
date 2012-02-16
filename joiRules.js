@@ -9,6 +9,34 @@ var internals = {
 
 };
 
+// dailyExpireFromRule this function assumes the rule being passed in 
+// has a daily expiry, it created the Date object based on this and 
+// returns it.
+
+exports.dateExpireFromRule = function(rule, refDate) {
+
+	return new Date('' +  ( refDate.getMonth() + 1 ) + '/' + refDate.getDate() + '/' + refDate.getFullYear() + ' ' + rule.expiresat + ':00');			
+}
+
+// dailyExpireFromRule this function assumes the rule being passed in 
+// has a daily expiry, it created the Date object based on this and 
+// returns it.
+
+exports.dailyExpireFromRule = function(rule) {
+
+	var nowDate = new Date();
+	
+	return exports.dateExpireFromRule(rule, new Date());
+}
+
+// ttlFromRule this function assumes the rule being passed in 
+// has a time to live expiration, it returns a timestamp (millisecs from inception) 
+// and returns it.
+
+exports.ttlFromRule = function(creationDate, rule) {
+
+	return  creationDate.getTime() + ( rule.expires * 60000 ); // 60,000 milliseconds in a minute
+}
 
 // expiration date checking based on routes
 	
@@ -43,41 +71,32 @@ exports.isExpired = function(ruleKey, creationDate, expiryRules) {
 	
 	if (rule) {
 	
-		
-		console.log('UTC' + creationDate.toString());
-		
 		if (rule.expires) {
 		
 			// This is a ttl expiration, so we add the expires value to the creationDate and check
 			
-			var done = creationDate.getTime() + ( rule.expires * 60000 ); // 60,000 milliseconds in a minute
+			var done = exports.ttlFromRule(creationDate, rule);
 			var now = Date.now();
 			
 			if (now > done) {
 			
 				return true;
 				
-			} else {
-			
-				return false;
-				
 			}
-		} else if (rule.expiresat) {
+		} 
+		
+		if (rule.expiresat) {
 		
 			// This is a string representing the expiration time of day for this cache.
 			// ie: '02:00' is 2AM each day
 			
 			var now = Date.now();
-			var nowDate = new Date();
-			
-			console.log('expiresat');
-			console.log('' +  ( nowDate.getMonth() + 1 ) + '/' + nowDate.getDate() + '/' + nowDate.getFullYear() + ' ' + rule.expiresat + ':00');
-			
-			var doneDate = new Date('' +  ( nowDate.getMonth() + 1 ) + '/' + nowDate.getDate() + '/' + nowDate.getFullYear() + ' ' + rule.expiresat + ':00');
-			var done = doneDate.getTime();
 			var created = creationDate.getTime();
 			
-			console.log('the timestamps: ' + now + ' - ' + created + ' - ' + done);
+			var doneDate = exports.dailyExpireFromRule(rule);
+			var done = doneDate.getTime();
+			
+//			console.log('the timestamps: ' + now + ' - ' + created + ' - ' + done);
 			
 			if ( created > done ) { // This was created after the time of day, so it's not expired
 			

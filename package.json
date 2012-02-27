@@ -1,5 +1,5 @@
 {
-    "name": "Joi",
+    "name": "joi",
     "description": "Multi level cache utilizing redis and mongodb",
     "version": "0.0.1",
     "author": "Doug Pedley <dpedley@gmail.com>",

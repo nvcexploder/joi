@@ -104,14 +104,26 @@ exports.create = function(inOptions) {
 									if (entry) {
 									
 										if (!JoiRules.isExpired(key, entry.creationDate, server.public.getExpiryRules())) {
+
+											// The item has not expire, next check if it is stale
+											
+											if (!JoiRules.isStale(key, entry.creationDate, server.public.getExpiryRules())) {
 										
-											cacheOutput(entry.cache);
+												cacheOutput(entry.cache);
+												
+											} else {
+											
+												// The item is stale, but not expired, return it with the stale flag
+											
+												cacheOutput(entry.cache, true);
+													
+											}
 											
 										} else {
 										
 											// The cache has expired, remove it and return null
-											// dpedley TODO: review, should this return the cache in some cases
 											
+											console.log('Expiring key: ' + key);
 											collection.remove( { 'url' : key } );
 											cacheOutput(null);
 										}
@@ -120,8 +132,7 @@ exports.create = function(inOptions) {
 									
 										// There was no entry return without an object
 										
-										console.log('No entry: ' + err);
-										
+//										console.log('No entry: ' + err);
 										cacheOutput(null);
 									}
 								});
@@ -130,8 +141,7 @@ exports.create = function(inOptions) {
 							
 								// There was no collection return without an object
 								
-								console.log('No collection: ' + err);
-						
+//								console.log('No collection: ' + err);						
 								cacheOutput(null);
 							}
 						});
@@ -139,7 +149,6 @@ exports.create = function(inOptions) {
 					} else {
 					
 						console.log('No DB: ' + err);
-						
 						cacheOutput(null);
 					}
 				});

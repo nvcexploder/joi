@@ -2,30 +2,30 @@ var Joi = require('../../joi');
 
 var joiRules = [
 
-//	{ resource: 'default', cache: false },
+	{ resource: 'default', cache: false },
 	{ resource: '/foo/001', cache: true, expiresat: '02:00' },
 	{ resource: '/foo/002', cache: false },
 	{ resource: '/foo/003', cache: true, expires: 10 },
-	{ resource: '/foo/004', cache: true, expires: 5 },
-	{ resource: '/foo/005', cache: true, expires: 2 }
+	{ resource: '/foo/004', cache: true, stalein: 5, expires: 60 },
+	{ resource: '/foo/005', cache: true, stateat: '11:02', expiresat: '14:00' }
 ];
 
-//var joiClient = Joi.create({
-//
-//	port: 27017,
-//	address: '127.0.0.1',
-//	connectionType: Joi.connectionType.MONGO,
-//	expiryRules: joiRules
-//});
-//
 var joiClient = Joi.create({
 
-	port: 6379,
+	port: 27017,
 	address: '127.0.0.1',
-	connectionType: Joi.connectionType.REDIS,
+	connectionType: Joi.connectionType.MONGO,
 	expiryRules: joiRules
 });
 
+//var joiClient = Joi.create({
+//
+//	port: 6379,
+//	address: '127.0.0.1',
+//	connectionType: Joi.connectionType.REDIS,
+//	expiryRules: joiRules
+//});
+//
 //var joiClient = Joi.create({
 //
 //	port: 8008,
@@ -47,11 +47,13 @@ var request = [ // These are all arbitrary for testing, in practice these will b
 
 function createUniqueLog(logPrefix) {
 
-	return function(outString) {
+	return function(outString, isStale) {
 	
-		console.log('');
-		console.log('LOG[' + logPrefix + ']: ' + outString);
-		console.log('');
+		if (outString) {
+		
+			var fresh = (isStale)?'STALE':'FRESH';
+			console.log(fresh + '[' + logPrefix + ']: ' + outString);
+		}
 	}
 }
 

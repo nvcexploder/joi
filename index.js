@@ -17,10 +17,16 @@
 // joiClient.setCacheForRequest(req, cacheData, reply);
 
 var URL = require('url');
+var JoiRules = require('./joiRules');
+var JoiMongo = null;
+var JoiRedis = null;
+var JoiRestClient = null;
+/*
+// Developer's note, we essentially want to lazy load the next 3 DB interfaces based on the joi create calls made.
 var JoiMongo = require('./joiMongo');
 var JoiRedis = require('./joiRedis');
 var JoiRestClient = require('./joiRestClient');
-var JoiRules = require('./joiRules');
+*/
 
 var internals = {
 
@@ -29,6 +35,34 @@ var internals = {
 	translateRequestToKey: function(req) {
 
 		return req.url;
+	},
+
+	// setup and destroy the connection
+	
+	lazyRequire: function(conn) {
+	
+		if (conn==exports.connectionType.MONGO) {
+		
+			if (JoiMongo==null) {
+			
+				JoiMongo = require('./joiMongo');
+			}
+			
+		} else if (conn==exports.connectionType.REDIS) {
+		
+			if (JoiRedis==null) {
+			
+				JoiRedis = require('./joiRedis');
+			}
+			
+		} else if (conn==exports.connectionType.REST) {
+		
+			if (JoiRestClient==null) {
+			
+				JoiRestClient = require('./joiRestClient');
+			}
+			
+		}
 	},
 
 	// setup joi mongo connection if needed
@@ -163,6 +197,11 @@ exports.create = function(inOptions) {
 	var defaultConnection = exports.connectionType.MONGO;
 	var defaultExpiryRules = {};
 	
+	if (inOptions.translateRequestToKey && (typeof inOptions.translateRequestToKey)=='function') {
+	
+		internals.translateRequestToKey = inOptions.translateRequestToKey;
+	}
+	
 	if (inOptions.address) {
 	
 		defaultAddress = inOptions.address;
@@ -190,7 +229,7 @@ exports.create = function(inOptions) {
 		defaultExpiryRules = inOptions.expiryRules;
 	}
 	
-	// dpedley TODO: rename server to something more appropriate.
+	internals.lazyRequire(defaultConnection);
 	
 	var server = {
 	

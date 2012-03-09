@@ -6,7 +6,7 @@
 // Load modules
 
 var Hapi = require('hapi');
-var Joi = require('../joi');
+var Joi = require('lib/joi');
 
 // Declare internals
 

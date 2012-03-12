@@ -10,6 +10,7 @@ A joi client provides simple methods like get and set to access data cached eith
 
 NOTE: 
 This key normalization method can be overriden using a joi configuration option:
+
 ~~~javascript
 	Joi.create({ 'translateRequestToKey': myCustomKeyMethod });
 ~~~

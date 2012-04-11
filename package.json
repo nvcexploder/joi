@@ -1,7 +1,7 @@
 {
     "name": "joi",
     "description": "Multi level cache utilizing redis and mongodb",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "author": "Doug Pedley <dpedley@gmail.com>",
     "dependencies": {
         "hapi": "0.x.x",
